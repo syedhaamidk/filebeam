@@ -793,14 +793,17 @@ class Handler(BaseHTTPRequestHandler):
         if is_rate_limited(self.client_ip):
             self.send_json({"error":"Too many requests"},429); return
         parsed=urlparse(self.path)
-        path=parsed.path.rstrip("/"or"/")
+        path=parsed.path
+        # Normalise: strip trailing slash except for root
+        if path != "/" and path.endswith("/"):
+            path = path.rstrip("/")
         qs=parse_qs(parsed.query)
 
-        if path in ("/login",""):
+        if path == "/login":
             if self.authed(): self.redirect("/"); return
             self.send_html(LOGIN_HTML); return
 
-        if path=="/":
+        if path == "/":
             if not self.authed(): self.redirect("/login"); return
             self.send_html(MAIN_HTML.replace("{{SESSION_MS}}",str(SESSION_LIFETIME*1000))); return
 
